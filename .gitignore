@@ -1,0 +1,65 @@
+# ==============================================================
+# WiFi Audit Lab - .gitignore
+# Proyecto Python / PyQt6 + artefactos de auditoria WiFi
+# ==============================================================
+
+# ---------- Bytecode y cache de Python ------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.python-version
+
+# ---------- Empaquetado ----------------------------------------
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ---------- Entornos virtuales ---------------------------------
+.venv/
+venv/
+env/
+ENV/
+
+# ---------- Herramientas de calidad ---------------------------
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# ---------- IDEs y editores ------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---------- Sistema operativo ----------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- Artefactos de auditoria WiFi (NO subir nunca) -----
+# Los .cap contienen handshakes (material de autenticacion de la
+# red) y los .csv / .netxml guardan inventario de redes vecinas:
+# son datos personales y sensibles.
+*.cap
+*.pcap
+*.pcapng
+*.netxml
+*.kismet
+*.kismet.csv
+*.csv
+*.log
+*.22000
+*.hc22000
+hashes-*.txt
+
+# Diccionarios de contrasenas (pesados y/o sensibles)
+rockyou*.txt
+wordlists/
+
+# Carpeta de salida por defecto de la aplicacion
+wifi_audit_capturas/

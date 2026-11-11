@@ -1,0 +1,8 @@
+# Interfaz gráfica
+PyQt6>=6.5
+
+# Herramientas del sistema (se instalan con apt, no con pip):
+#   sudo apt install aircrack-ng iw
+#
+# El adaptador TP-Link TL-WN722N v4 usa el chip Realtek RTL8188EUS.
+# Necesita el driver rtl8188eus para modo monitor e inyección.
