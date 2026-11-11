@@ -167,7 +167,7 @@ mantenido por aircrack-ng: sigue la guía de
 ### Entorno Python
 
 ```bash
-git clone https://github.com/TU_USUARIO/wifi-audit-gui.git
+git clone https://github.com/fzzzman11/wifi-audit-gui.git
 cd wifi-audit-gui
 python3 -m venv .venv
 source .venv/bin/activate
@@ -339,7 +339,7 @@ commits (Conventional Commits) y el proceso de pull requests están en
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ```bash
-git clone https://github.com/TU_USUARIO/wifi-audit-gui.git
+git clone https://github.com/fzzzman11/wifi-audit-gui.git
 cd wifi-audit-gui
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
@@ -368,8 +368,7 @@ aplicación.
 
 ## Créditos
 
-Proyecto académico desarrollado por **[Nombre del alumno]** para la asignatura
-**[Asignatura] · [Universidad] · Curso 2025/2026**.
+Proyecto académico desarrollado por **[F.N.D]**
 
 - Interfaz y automatización: WiFi Audit Lab.
 - Motor de auditoría: la suite [aircrack-ng](https://www.aircrack-ng.org/),
