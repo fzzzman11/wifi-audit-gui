@@ -6,7 +6,7 @@
 
 # ◈ WiFi Audit Lab
 
-**Laboratorio GUI (PyQt6) para el estudio guiado del flujo de auditoría WPA/WPA2 con la suite aircrack-ng: modo monitor → escaneo → captura de handshake → crackeo por diccionario.**
+**Laboratorio GUI (PyQt6) para el estudio guiado del flujo de auditoría WPA/WPA2 con la suite aircrack-ng: modo monitor → escaneo → captura de handshake → creación de diccionarios → crackeo por diccionario.**
 
 Proyecto académico para un laboratorio universitario de ciberseguridad.
 
@@ -34,7 +34,9 @@ Proyecto académico para un laboratorio universitario de ciberseguridad.
           docs/images/interface_page.png (paso 1 · interfaz)
           docs/images/scan_page.png       (paso 2 · tabla de redes)
           docs/images/capture_page.png    (paso 3 · captura en curso)
-          docs/images/analysis_page.png   (paso 4 · aircrack-ng)
+           docs/images/analysis_page.png   (paso 4 · aircrack-ng)
+           docs/images/dictionary_page.png (paso 5 · diccionarios)
+
         Puedes usar, por ejemplo:
           gnome-screenshot -w -f docs/images/main_window.png
           flameshot gui
@@ -64,6 +66,7 @@ Proyecto académico para un laboratorio universitario de ciberseguridad.
 4. [Requisitos](#requisitos)
 5. [Instalación](#instalación)
 6. [Uso](#uso)
+   - [Diccionarios personalizados](#diccionarios-personalizados)
 7. [Archivos generados](#archivos-generados)
 8. [Solución de problemas](#solución-de-problemas)
    - [Driver RTL8188EU / RTL8188EUS](#driver-rtl8188eu--rtl8188eus)
@@ -79,7 +82,7 @@ Proyecto académico para un laboratorio universitario de ciberseguridad.
 
 WiFi Audit Lab es un **proyecto académico** desarrollado para una asignatura de
 ciberseguridad. Su propósito es didáctico: en lugar de teclear a mano la cadena
-de comandos de aircrack-ng, la aplicación guía al alumno por las cuatro fases
+de comandos de aircrack-ng, la aplicación guía al alumno por las cinco fases
 de una auditoría WPA/WPA2 en un entorno controlado, mostrando en cada paso qué
 herramienta se lanza, con qué argumentos y qué produce.
 
@@ -89,15 +92,28 @@ herramienta se lanza, con qué argumentos y qué produce.
 | 2 | Escaneo | `airodump-ng` | Se enumeran redes (ESSID, BSSID, canal, cifrado, señal) | Cómo se anuncian los APs y cómo se leen con airodump-ng |
 | 3 | Captura | `airodump-ng` + `aireplay-ng` | Captura dirigida del 4-way handshake; el deauth (10 paquetes) es opcional y exige confirmación | Cómo funciona la autenticación WPA/WPA2 (el handshake) |
 | 4 | Análisis | `aircrack-ng` | Se prueba un diccionario contra el handshake capturado | Por qué una contraseña débil cae ante un ataque de diccionario |
+| 5 | Diccionarios | generador propio | Se crean wordlists a partir de palabras base, reglas y un límite | Cómo se construye un diccionario y por qué el número de candidatos importa |
+
+El paso 5 se puede usar antes del 4: los diccionarios que genera quedan
+guardados y se seleccionan directamente desde la pantalla de análisis.
 
 ## Características
 
-- Asistente en **4 pasos** con barra lateral de navegación y badges de estado
+- Asistente en **5 pasos** con barra lateral de navegación y badges de estado
   (ROOT, MONITOR).
 - **Diálogo legal obligatorio** al arrancar: hay que confirmar que se dispone
   de autorización antes de usar la aplicación.
+- **Creador de diccionarios**: palabras base + variantes (mayúsculas, leet,
+  años, números, símbolos) con **límite de palabras** configurable; los `.txt`
+  se guardan en `~/wifi_audit_capturas/diccionarios/` y se reutilizan en el
+  análisis.
 - Workers en hilos (`QThread`): la interfaz nunca se congela durante escaneos,
-  capturas o crackeos, y todo puede detenerse con **DETENER TODO**.
+  capturas, generación de diccionarios o crackeos, y todo puede detenerse con
+  **DETENER TODO**.
+- Paneles con desplazamiento y contraste mejorado para que ningún botón ni
+  etiqueta quede cortado en pantallas pequeñas.
+- Botón **SALIR** en la cabecera: cierra la aplicación pasando por el mismo
+  flujo de limpieza que el cierre de la ventana.
 - Comprobación automática al inicio de privilegios root y de las herramientas
   del sistema requeridas.
 - Al salir, la interfaz se **restaura a modo managed** y se reinicia
@@ -114,6 +130,13 @@ herramienta se lanza, con qué argumentos y qué produce.
 | modo monitor |     | bandas 2.4 y |     | handshake + deauth     |     | diccionario contra  |
 |              |     | 5 GHz        |     | opcional (10 paquetes) |     | el handshake (.cap) |
 +--------------+     +--------------+     +------------------------+     +---------------------+
+                                                                              ^
+                                                                              |
+                    +----------------------+     +--------------------------+
+                    | 5. DICCIONARIOS      | --> | .txt guardados y listos  |
+                    | palabras + reglas    |     | para seleccionar en el 4 |
+                    | + límite de palabras |     +--------------------------+
+                    +----------------------+
 ```
 
 ## Requisitos
@@ -167,7 +190,7 @@ mantenido por aircrack-ng: sigue la guía de
 ### Entorno Python
 
 ```bash
-git clone https://github.com/fzzzman11/wifi-audit-gui.git
+git clone https://github.com/TU_USUARIO/wifi-audit-gui.git
 cd wifi-audit-gui
 python3 -m venv .venv
 source .venv/bin/activate
@@ -203,11 +226,37 @@ en el banner (usa `pkexec`, que ya preserva el entorno gráfico).
 5. **Paso 3 · Captura.** Panel de estado en vivo: clientes detectados, paquetes
    y tiempo transcurrido. Al aparecer el handshake, la app pita, muestra la
    ruta del `.cap` y habilita el análisis.
-6. **Paso 4 · Análisis.** Selecciona el diccionario del laboratorio y lanza
-   `aircrack-ng`. Se muestra el progreso (claves probadas, claves/s) y el
-   resultado: la clave encontrada o "no está en el diccionario".
-7. **Al salir.** La app detiene los procesos, restaura la interfaz a modo
-   *managed* y reinicia NetworkManager.
+6. **Paso 4 · Análisis.** Comprueba la ruta del `.cap` (se rellena sola tras la
+   captura), elige un diccionario con el selector *Guardados* —o pulsa
+   *Examinar…* para usar un `.txt` externo— y lanza `aircrack-ng`. Se muestra el
+   progreso (claves probadas, claves/s) y el resultado: la clave encontrada o
+   "no está en el diccionario".
+7. **Paso 5 · Diccionarios.** Escribe palabras propias, marca las variaciones
+   que quieras y fija el **límite de palabras**. Pulsa *Generar y guardar*: el
+   diccionario aparece en la tabla inferior y ya puede usarse desde el paso 4
+   con *Usar en análisis*.
+8. **Al salir.** Pulsa **SALIR** (o cierra la ventana). La app detiene los
+   procesos, restaura la interfaz a modo *managed* y reinicia NetworkManager.
+
+### Diccionarios personalizados
+
+La pantalla 5 construye wordlists sin editar archivos a mano:
+
+- **Palabras base:** una por línea (nombres, marcas, fechas, palabras del
+  laboratorio…). Se ignoran líneas vacías y repetidos.
+- **Variaciones:** palabras originales, inicial en mayúscula, todo en
+  mayúsculas, sustitución *leet* (`a→4`, `e→3`, `i→1`, `o→0`, `s→5`), sufijos
+  de años, números y símbolos.
+- **Límite:** controla cuántas palabras se guardan como máximo. Las variantes
+  se generan por capas, así que con límites bajos aparecen primero las formas
+  básicas de todas las palabras introducidas.
+- **Gestión:** la tabla muestra nombre, número de palabras y fecha; permite
+  previsualizar las primeras palabras, eliminar diccionarios y enviarlos al
+  análisis. Si el nombre ya existe, se pregunta antes de sobrescribirlo.
+
+Cada diccionario se guarda como
+`~/wifi_audit_capturas/diccionarios/<nombre>.txt` (una palabra por línea) junto
+a un `.json` con sus metadatos (palabras base, reglas, límite y fecha).
 
 > [!TIP]
 > En el laboratorio genera el handshake de forma natural conectando y
@@ -220,7 +269,10 @@ Por defecto, la aplicación escribe en `~/wifi_audit_capturas/`:
 
 ```
 ~/wifi_audit_capturas/
-└── handshake_<ESSID>_<AAAAMMDD_HHMMSS>-01.cap   (+ .csv y .netxml de airodump-ng)
+├── handshake_<ESSID>_<AAAAMMDD_HHMMSS>-01.cap   (+ .csv y .netxml de airodump-ng)
+└── diccionarios/
+    ├── <nombre>.txt                             (wordlist generada, una palabra por línea)
+    └── <nombre>.json                            (metadatos: reglas, límite y fecha)
 ```
 
 Los `.cap` contienen material de autenticación de la red auditada: **no los
@@ -296,13 +348,19 @@ wifi-audit-gui/
 │   ├── scanner.py             #   worker: escaneo con airodump-ng
 │   ├── capture.py             #   worker: captura dirigida + deauth opcional
 │   ├── cracker.py             #   worker: aircrack-ng con diccionario
+│   ├── wordlist.py            #   generación, guardado y worker de diccionarios
 │   └── parsers.py             #   parseo de la salida de las herramientas
 ├── ui/                        # Interfaz (PyQt6)
 │   ├── legal_dialog.py        #   aviso legal obligatorio al arrancar
-│   ├── main_window.py         #   orquestación de páginas, workers y estado
-│   ├── theme.py               #   hoja de estilos QSS (tema oscuro)
-│   ├── widgets.py             #   widgets reutilizables (cards, badges)
-│   └── pages/                #   las 4 pantallas del asistente
+│   ├── main_window.py         #   orquestación de páginas, workers, SALIR y estado
+│   ├── theme.py               #   hoja de estilos QSS (tema oscuro y contrastes)
+│   ├── widgets.py             #   widgets reutilizables (cards, badges, banner)
+│   └── pages/                 #   las 5 pantallas del asistente
+│       ├── interface_page.py  #     paso 1 · interfaz
+│       ├── scan_page.py       #     paso 2 · escaneo
+│       ├── capture_page.py    #     paso 3 · captura
+│       ├── analysis_page.py   #     paso 4 · análisis (+ diccionarios guardados)
+│       └── dictionary_page.py #     paso 5 · creación de diccionarios
 ├── docs/images/               # Capturas de pantalla del README
 ├── .github/workflows/lint.yml # CI: ruff en cada push/PR
 ├── pyproject.toml             # Metadatos + configuración de ruff
@@ -339,7 +397,7 @@ commits (Conventional Commits) y el proceso de pull requests están en
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ```bash
-git clone https://github.com/fzzzman11/wifi-audit-gui.git
+git clone https://github.com/TU_USUARIO/wifi-audit-gui.git
 cd wifi-audit-gui
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
@@ -368,7 +426,8 @@ aplicación.
 
 ## Créditos
 
-Proyecto académico desarrollado por **[F.N.D]**
+Proyecto académico desarrollado por **[Nombre del alumno]** para la asignatura
+**[Asignatura] · [Universidad] · Curso 2025/2026**.
 
 - Interfaz y automatización: WiFi Audit Lab.
 - Motor de auditoría: la suite [aircrack-ng](https://www.aircrack-ng.org/),
